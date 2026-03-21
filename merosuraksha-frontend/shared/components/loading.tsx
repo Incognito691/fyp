@@ -1,6 +1,6 @@
 import React from "react";
-import { ActivityIndicator, Text } from "react-native";
-import { MotiView } from "moti";
+import { ActivityIndicator, Text, View } from "react-native";
+import Animated, { FadeIn } from "react-native-reanimated";
 
 interface LoadingProps {
   message?: string;
@@ -8,13 +8,15 @@ interface LoadingProps {
 
 export function Loading({ message }: LoadingProps) {
   return (
-    <MotiView
-      from={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="flex-row items-center justify-center py-4"
-    >
-      <ActivityIndicator size="small" color="#007AFF" />
-      {message && <Text className="ml-2 text-textSecondary">{message}</Text>}
-    </MotiView>
+    <Animated.View entering={FadeIn.duration(300)}>
+      <View className="glass-card p-card-padding rounded-lg items-center justify-center">
+        <ActivityIndicator size="small" color="#60A5FA" />
+        {message && (
+          <Text className="text-body text-text-secondary ml-sm mt-sm">
+            {message}
+          </Text>
+        )}
+      </View>
+    </Animated.View>
   );
 }

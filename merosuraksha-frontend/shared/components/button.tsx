@@ -1,6 +1,6 @@
 import React from "react";
 import { TouchableOpacity, Text, ActivityIndicator } from "react-native";
-import { MotiView } from "moti";
+import Animated, { ZoomIn } from "react-native-reanimated";
 
 interface ButtonProps {
   title: string;
@@ -24,36 +24,31 @@ export function Button({
   const isDisabled = disabled || loading;
 
   return (
-    <MotiView
-      from={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ type: "timing", duration: 200 }}
-      className={`items-center justify-center rounded-lg ${
-        variant === "primary"
-          ? "bg-primary"
-          : "bg-transparent border-2 border-primary"
-      } ${size === "lg" ? "h-14" : "h-12"} ${isDisabled ? "opacity-50" : ""} ${className}`}
-    >
+    <Animated.View entering={ZoomIn.duration(200)} className={className}>
       <TouchableOpacity
         onPress={onPress}
         disabled={isDisabled}
-        className="flex-row items-center"
+        className={`
+          ${variant === "primary"
+            ? "bg-blue-500 border-blue-500"
+            : "bg-gray-800/50 border-gray-600/50"
+          }
+          ${size === "lg" ? "h-14" : "h-12"}
+          rounded-xl px-6 flex-row items-center justify-center border
+          ${isDisabled ? "opacity-50" : ""}
+        `}
       >
         {loading ? (
-          <ActivityIndicator
-            color={variant === "primary" ? "#fff" : "#007AFF"}
-            size="small"
-          />
+          <ActivityIndicator size="small" color="#FFFFFF" />
         ) : (
-          <Text
-            className={`font-semibold ${
-              variant === "primary" ? "text-white" : "text-primary"
-            } ${size === "lg" ? "text-base" : "text-sm"}`}
-          >
+          <Text className={`
+            font-semibold text-base
+            ${variant === "primary" ? "text-white" : "text-white"}
+          `}>
             {title}
           </Text>
         )}
       </TouchableOpacity>
-    </MotiView>
+    </Animated.View>
   );
 }

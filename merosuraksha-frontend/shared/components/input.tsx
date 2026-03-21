@@ -26,20 +26,27 @@ export function Input({
   return (
     <View className={`mb-4 ${className}`}>
       <View
-        className={`flex-row items-center border-2 rounded-lg bg-white ${
-          error ? "border-danger" : "border-border"
-        }`}
+        className={`
+          flex-row items-center rounded-xl h-12 px-4 border
+          ${error
+            ? "bg-red-900/20 border-red-500/50"
+            : "bg-gray-800/50 border-gray-600/50"
+          }
+        `}
       >
         {IconComponent && (
-          <View className="pl-3">
-            <IconComponent size={20} color={error ? "#FF3B30" : "#86868b"} />
+          <View className="mr-3">
+            <IconComponent
+              size={20}
+              color={error ? "#EF4444" : "#9CA3AF"}
+            />
           </View>
         )}
 
         <TextInput
-          className="flex-1 h-12 px-4 text-base text-text"
+          className="flex-1 text-base text-white"
           placeholder={placeholder}
-          placeholderTextColor="#86868b"
+          placeholderTextColor="#6B7280"
           value={value}
           onChangeText={onChangeText}
           secureTextEntry={type === "password" && !showPassword}
@@ -50,18 +57,20 @@ export function Input({
         {type === "password" && (
           <TouchableOpacity
             onPress={() => setShowPassword(!showPassword)}
-            className="pr-3"
+            className="ml-3"
           >
             {showPassword ? (
-              <EyeOff size={20} color="#86868b" />
+              <EyeOff size={20} color="#6B7280" />
             ) : (
-              <Eye size={20} color="#86868b" />
+              <Eye size={20} color="#6B7280" />
             )}
           </TouchableOpacity>
         )}
       </View>
 
-      {error && <Text className="text-danger text-sm mt-1">{error}</Text>}
+      {error && (
+        <Text className="text-red-400 text-sm mt-1">{error}</Text>
+      )}
     </View>
   );
 }

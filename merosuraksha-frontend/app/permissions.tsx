@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
+import * as Location from 'expo-location';
+import { useCameraPermissions } from 'expo-camera';
 import { openSettings } from 'expo-linking';
+import Animated, { FadeIn, FadeInUp, ZoomIn } from 'react-native-reanimated';
+import { Bell, MapPin, Camera, Shield, CheckCircle, AlertCircle, Settings } from 'lucide-react-native';
 
 type PermissionStatus = 'loading' | 'requesting' | 'granted' | 'denied';
 
@@ -12,239 +16,213 @@ export default function PermissionsScreen() {
   const router = useRouter();
   const [permissionStatus, setPermissionStatus] = useState<PermissionStatus>('loading');
   const [currentPermission, setCurrentPermission] = useState<string>('');
+  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
 
   useEffect(() => {
     checkPermissions();
-  }, []);
+  }, [cameraPermission]);
 
   const checkPermissions = async () => {
     setPermissionStatus('loading');
 
-    // Check for notifications permission
+    // Check notifications
     if (Device.isDevice) {
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
-      if (existingStatus !== 'granted') {
-        setPermissionStatus('requesting');
+      const { status } = await Notifications.getPermissionsAsync();
+      if (status !== 'granted') {
         setCurrentPermission('Notifications');
-        return;
-      }
-    }
-
-    // Check for location permission
-    try {
-      const { Location } = await import('expo-location');
-      const { status: locationStatus } = await Location.getForegroundPermissionsAsync();
-      if (locationStatus !== 'granted') {
         setPermissionStatus('requesting');
-        setCurrentPermission('Location');
         return;
       }
-    } catch (error) {
-      console.log('Location not available');
     }
 
-    // Check for camera permission
-    try {
-      const { Camera } = await import('expo-camera');
-      const { status: cameraStatus } = await Camera.getCameraPermissionsAsync();
-      if (cameraStatus !== 'granted') {
-        setPermissionStatus('requesting');
-        setCurrentPermission('Camera');
-        return;
-      }
-    } catch (error) {
-      console.log('Camera not available');
+    // Check location
+    const { status: locationStatus } = await Location.getForegroundPermissionsAsync();
+    if (locationStatus !== 'granted') {
+      setCurrentPermission('Location');
+      setPermissionStatus('requesting');
+      return;
     }
 
+    // Check camera
+    if (!cameraPermission?.granted) {
+      setCurrentPermission('Camera');
+      setPermissionStatus('requesting');
+      return;
+    }
+
+    // All granted
     setPermissionStatus('granted');
-    setTimeout(() => {
-      router.replace('/(auth)');
-    }, 1000);
+    setTimeout(() => router.replace('/(auth)/login'), 1000);
   };
 
   const requestPermissions = async () => {
-    setPermissionStatus('requesting');
-
-    // Request notifications permission
+    // Request notifications
     if (Device.isDevice) {
-      setCurrentPermission('Notifications');
       const { status } = await Notifications.requestPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert(
-          'Permission Required',
-          'This app needs notification permission to send you important alerts.',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Settings', onPress: () => openSettings() }
-          ]
-        );
+        showDeniedAlert('Notifications');
         setPermissionStatus('denied');
         return;
       }
     }
 
-    // Request location permission
-    try {
-      const { Location } = await import('expo-location');
-      setCurrentPermission('Location');
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert(
-          'Permission Required',
-          'This app needs location permission to provide location-based features.',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Settings', onPress: () => openSettings() }
-          ]
-        );
-        setPermissionStatus('denied');
-        return;
-      }
-    } catch (error) {
-      console.log('Location not available');
+    // Request location
+    const { status: locationStatus } = await Location.requestForegroundPermissionsAsync();
+    if (locationStatus !== 'granted') {
+      showDeniedAlert('Location');
+      setPermissionStatus('denied');
+      return;
     }
 
-    // Request camera permission
-    try {
-      const { Camera } = await import('expo-camera');
-      setCurrentPermission('Camera');
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert(
-          'Permission Required',
-          'This app needs camera permission for scanning features.',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Settings', onPress: () => openSettings() }
-          ]
-        );
-        setPermissionStatus('denied');
-        return;
-      }
-    } catch (error) {
-      console.log('Camera not available');
+    // Request camera
+    const result = await requestCameraPermission();
+    if (!result.granted) {
+      showDeniedAlert('Camera');
+      setPermissionStatus('denied');
+      return;
     }
 
     setPermissionStatus('granted');
-    setTimeout(() => {
-      router.replace('/(auth)');
-    }, 1000);
+    setTimeout(() => router.replace('/(auth)/login'), 1000);
+  };
+
+  const showDeniedAlert = (permission: string) => {
+    Alert.alert(
+      'Permission Required',
+      `MeroSuraksha needs ${permission} permission to protect you effectively.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Open Settings', onPress: () => openSettings() },
+      ]
+    );
+  };
+
+  const getPermissionIcon = (permission: string) => {
+    switch (permission) {
+      case 'Notifications': return <Bell size={24} color="#60A5FA" />;
+      case 'Location': return <MapPin size={24} color="#60A5FA" />;
+      case 'Camera': return <Camera size={24} color="#60A5FA" />;
+      default: return <Shield size={24} color="#60A5FA" />;
+    }
   };
 
   const renderContent = () => {
     switch (permissionStatus) {
       case 'loading':
         return (
-          <View style={styles.contentContainer}>
-            <ActivityIndicator size="large" color="#007AFF" />
-            <Text style={styles.title}>Checking permissions...</Text>
-          </View>
+          <Animated.View entering={FadeIn.duration(500)} className="items-center gap-6">
+            <Animated.View entering={ZoomIn.duration(600)}>
+              <View className="glass-card-strong p-6 rounded-full">
+                <ActivityIndicator size="large" color="#60A5FA" />
+              </View>
+            </Animated.View>
+            <Animated.View entering={FadeInUp.duration(500).delay(200)} className="items-center gap-3">
+              <Text className="text-h2 text-text-primary">Checking permissions...</Text>
+              <Text className="text-body-secondary text-center">Setting up your security</Text>
+            </Animated.View>
+          </Animated.View>
         );
 
       case 'requesting':
         return (
-          <View style={styles.contentContainer}>
-            <Text style={styles.title}>Permissions Required</Text>
-            <Text style={styles.subtitle}>
-              This app needs access to your {currentPermission} to provide the best experience.
-            </Text>
-            <TouchableOpacity style={styles.button} onPress={requestPermissions}>
-              <Text style={styles.buttonText}>Grant Permissions</Text>
-            </TouchableOpacity>
-          </View>
+          <Animated.View entering={FadeInUp.duration(500)} className="items-center gap-6 max-w-sm">
+            <Animated.View entering={ZoomIn.duration(600)}>
+              <View className="glass-card-strong p-6 rounded-full">
+                {getPermissionIcon(currentPermission)}
+              </View>
+            </Animated.View>
+
+            <Animated.View entering={FadeInUp.duration(500).delay(200)} className="items-center gap-4">
+              <Text className="text-h1 text-text-primary text-center">Permission Required</Text>
+              <Text className="text-body-secondary text-center leading-6">
+                MeroSuraksha needs access to your {currentPermission} to keep you protected from scams and threats.
+              </Text>
+            </Animated.View>
+
+            <Animated.View entering={FadeInUp.duration(500).delay(400)} className="w-full gap-3">
+              <TouchableOpacity
+                className="btn-primary"
+                onPress={requestPermissions}
+              >
+                <Text className="btn-primary-text">Grant {currentPermission}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                className="btn-ghost"
+                onPress={() => openSettings()}
+              >
+                <Text className="btn-ghost-text flex-row items-center gap-2">
+                  <Settings size={16} />
+                  Open Settings
+                </Text>
+              </TouchableOpacity>
+            </Animated.View>
+          </Animated.View>
         );
 
       case 'granted':
         return (
-          <View style={styles.contentContainer}>
-            <Text style={styles.title}>All Set!</Text>
-            <Text style={styles.subtitle}>Permissions granted successfully.</Text>
-            <ActivityIndicator size="small" color="#007AFF" />
-          </View>
+          <Animated.View entering={FadeInUp.duration(500)} className="items-center gap-6">
+            <Animated.View entering={ZoomIn.duration(600)}>
+              <View className="glass-card-safe p-6 rounded-full">
+                <CheckCircle size={32} color="#4ADE80" />
+              </View>
+            </Animated.View>
+
+            <Animated.View entering={FadeInUp.duration(500).delay(200)} className="items-center gap-3">
+              <Text className="text-h1 text-safe-text text-center">All Protected!</Text>
+              <Text className="text-body-secondary text-center">Taking you to your secure space...</Text>
+            </Animated.View>
+
+            <Animated.View entering={FadeInUp.duration(500).delay(400)}>
+              <ActivityIndicator size="small" color="#4ADE80" />
+            </Animated.View>
+          </Animated.View>
         );
 
       case 'denied':
         return (
-          <View style={styles.contentContainer}>
-            <Text style={styles.title}>Permission Denied</Text>
-            <Text style={styles.subtitle}>
-              Some permissions were denied. You can enable them in settings.
-            </Text>
-            <TouchableOpacity style={styles.button} onPress={requestPermissions}>
-              <Text style={styles.buttonText}>Try Again</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.secondaryButton} onPress={() => openSettings()}>
-              <Text style={styles.secondaryButtonText}>Open Settings</Text>
-            </TouchableOpacity>
-          </View>
-        );
+          <Animated.View entering={FadeInUp.duration(500)} className="items-center gap-6 max-w-sm">
+            <Animated.View entering={ZoomIn.duration(600)}>
+              <View className="glass-card-danger p-6 rounded-full">
+                <AlertCircle size={32} color="#F87171" />
+              </View>
+            </Animated.View>
 
-      default:
-        return null;
+            <Animated.View entering={FadeInUp.duration(500).delay(200)} className="items-center gap-4">
+              <Text className="text-h1 text-danger-text text-center">Permission Denied</Text>
+              <Text className="text-body-secondary text-center leading-6">
+                Some permissions were denied. Enable them in settings to continue with full protection.
+              </Text>
+            </Animated.View>
+
+            <Animated.View entering={FadeInUp.duration(500).delay(400)} className="w-full gap-3">
+              <TouchableOpacity
+                className="btn-primary"
+                onPress={requestPermissions}
+              >
+                <Text className="btn-primary-text">Try Again</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                className="btn-ghost"
+                onPress={() => openSettings()}
+              >
+                <Text className="btn-ghost-text flex-row items-center gap-2">
+                  <Settings size={16} />
+                  Open Settings
+                </Text>
+              </TouchableOpacity>
+            </Animated.View>
+          </Animated.View>
+        );
     }
   };
 
   return (
-    <View style={styles.container}>
-      <StatusBar style="auto" />
+    <View className="screen-centered">
+      <StatusBar style="light" />
       {renderContent()}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  contentContainer: {
-    alignItems: 'center',
-    maxWidth: 300,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    textAlign: 'center',
-    color: '#1a1a1a',
-  },
-  subtitle: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginBottom: 32,
-    color: '#666',
-    lineHeight: 24,
-  },
-  button: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 32,
-    paddingVertical: 16,
-    borderRadius: 12,
-    minWidth: 200,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  secondaryButton: {
-    backgroundColor: 'transparent',
-    paddingHorizontal: 32,
-    paddingVertical: 16,
-    borderRadius: 12,
-    minWidth: 200,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#007AFF',
-    marginTop: 12,
-  },
-  secondaryButtonText: {
-    color: '#007AFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});

@@ -34,4 +34,5 @@ export interface AuthResponse {
   token?: string;
   language?: "en" | "ne";
   hasOnboarded?: boolean;
+  avatar?: string;
 }

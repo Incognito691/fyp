@@ -8,6 +8,7 @@ interface AuthContextType {
   loading: boolean;
   login: (data: LoginInput) => Promise<{ success: boolean; message?: string }>;
   register: (data: RegisterInput) => Promise<{ success: boolean; message?: string }>;
+  googleLogin: (token: string) => Promise<{ success: boolean; message?: string }>;
   completeOnboarding: (data: OnboardingInput) => Promise<{ success: boolean; message?: string }>;
   logout: () => Promise<void>;
 }
@@ -101,6 +102,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const googleLogin = async (token: string) => {
+    try {
+      const response = await authApi.googleLogin(token);
+      if (response.success && response.token) {
+        const user: User = {
+          _id: response._id!,
+          name: response.name!,
+          email: response.email!,
+          isAdmin: response.isAdmin ?? false,
+          language: (response.language as 'en' | 'ne') ?? 'en',
+          hasOnboarded: response.hasOnboarded ?? false,
+          avatar: response.avatar,
+          token: response.token,
+        };
+        await SecureStore.setItemAsync('token', response.token);
+        await SecureStore.setItemAsync('user', JSON.stringify(user));
+        setUser(user);
+        return { success: true };
+      }
+      return { success: false, message: response.message };
+    } catch (err: any) {
+      return { success: false, message: err.response?.data?.message || 'Google login failed' };
+    }
+  };
+
   const logout = async () => {
     await SecureStore.deleteItemAsync('token');
     await SecureStore.deleteItemAsync('user');
@@ -108,7 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, completeOnboarding, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, googleLogin, completeOnboarding, logout }}>
       {children}
     </AuthContext.Provider>
   );
