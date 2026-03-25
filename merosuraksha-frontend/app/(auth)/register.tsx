@@ -1,9 +1,10 @@
 import React from "react";
-import { View, ScrollView, TouchableOpacity, ActivityIndicator, Text } from "react-native";
+import { View, ScrollView, TouchableOpacity, ActivityIndicator, Text, StyleSheet } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Mail, Lock, User } from "lucide-react-native";
+import { router } from "expo-router";
 
 import { useAuth } from "../../features/auth/hooks/use-auth";
 import { Input, Alert, Loading } from "../../shared/components";
@@ -15,9 +16,10 @@ import {
   registerSchema,
   type RegisterInput,
 } from "../../features/auth/utils/validation";
+import { theme, commonStyles, buttonStyles } from "@/shared/styles";
 
 export default function RegisterScreen() {
-  const { register: registerUser, googleLogin } = useAuth();
+  const { register: registerUser, googleLogin, user } = useAuth();
   const [loading, setLoading] = React.useState(false);
   const [googleLoading, setGoogleLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -35,6 +37,17 @@ export default function RegisterScreen() {
     },
   });
 
+  // Redirect after successful registration
+  React.useEffect(() => {
+    if (user) {
+      if (user.hasOnboarded) {
+        router.replace("/(main)/home");
+      } else {
+        router.replace("/(auth)/onboarding");
+      }
+    }
+  }, [user]);
+
   const onSubmit = async (data: RegisterInput) => {
     setError(null);
     setLoading(true);
@@ -46,6 +59,8 @@ export default function RegisterScreen() {
     if (!result.success) {
       setError(result.message || "Registration failed");
     }
+    // Success case is handled by useEffect in auth context
+    // User will be automatically redirected to onboarding
   };
 
   const handleGoogleLogin = async () => {
@@ -53,8 +68,6 @@ export default function RegisterScreen() {
     setGoogleLoading(true);
 
     try {
-      // TODO: Implement Google Sign-In
-      // For now, show a message
       setError("Google Sign-In coming soon!");
     } catch (error) {
       setError("Google login failed");
@@ -64,56 +77,46 @@ export default function RegisterScreen() {
   };
 
   return (
-    <View className="flex-1 bg-background">
+    <View style={commonStyles.screen}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        className="flex-1"
-        contentContainerStyle={{ flexGrow: 1 }}
+        contentContainerStyle={styles.scrollContent}
       >
-        <View className="flex-1 justify-center px-screen-padding py-section-gap min-h-screen">
-          {/* Header */}
+        <View style={styles.container}>
           <AuthHeader
             title="Create Account"
             subtitle="Join MeroSuraksha and stay protected"
             icon="user"
           />
 
-          {/* Error Alert */}
           {error && (
-            <Animated.View
-              entering={FadeInUp.duration(300)}
-            >
+            <Animated.View entering={FadeInUp.duration(300)}>
               <Alert message={error} type="error" />
             </Animated.View>
           )}
 
-          {/* Register Form */}
           <Animated.View
             entering={FadeInUp.duration(500).delay(100)}
-            className="gap-lg"
+            style={styles.formContainer}
           >
-            {/* Google Login Button */}
             <GoogleAuthButton
               onPress={handleGoogleLogin}
               loading={googleLoading}
               text="Sign up with Google"
             />
 
-            {/* Divider */}
             <FormDivider />
 
-            {/* Name Input */}
             <Controller
               control={control}
               name="name"
               render={({ field: { onChange, value } }) => (
-                <View className="gap-xs">
-                  <Text className="input-label">Full Name</Text>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Full Name</Text>
                   <Input
                     placeholder="Enter your full name"
                     value={value}
                     onChangeText={onChange}
-                    type="text"
                     error={errors.name?.message}
                     icon={User}
                   />
@@ -121,18 +124,17 @@ export default function RegisterScreen() {
               )}
             />
 
-            {/* Email Input */}
             <Controller
               control={control}
               name="email"
               render={({ field: { onChange, value } }) => (
-                <View className="gap-xs">
-                  <Text className="input-label">Email Address</Text>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Email Address</Text>
                   <Input
                     placeholder="Enter your email"
                     value={value}
                     onChangeText={onChange}
-                    type="email"
+                    keyboardType="email-address"
                     error={errors.email?.message}
                     icon={Mail}
                   />
@@ -140,18 +142,17 @@ export default function RegisterScreen() {
               )}
             />
 
-            {/* Password Input */}
             <Controller
               control={control}
               name="password"
               render={({ field: { onChange, value } }) => (
-                <View className="gap-xs">
-                  <Text className="input-label">Password</Text>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Password</Text>
                   <Input
                     placeholder="Create a strong password"
                     value={value}
                     onChangeText={onChange}
-                    type="password"
+                    secureTextEntry
                     error={errors.password?.message}
                     icon={Lock}
                   />
@@ -159,31 +160,52 @@ export default function RegisterScreen() {
               )}
             />
 
-            {/* Register Button */}
             <TouchableOpacity
-              className="btn-primary"
+              style={[buttonStyles.btnPrimary, styles.registerButton]}
               onPress={handleSubmit(onSubmit)}
               disabled={loading}
             >
               {loading ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
-                <Text className="btn-primary-text">Create Account</Text>
+                <Text style={buttonStyles.btnPrimaryText}>Create Account</Text>
               )}
             </TouchableOpacity>
           </Animated.View>
 
-          {/* Footer */}
           <AuthFooter
             question="Already have an account?"
             linkText="Sign In"
             linkRoute="/(auth)/login"
           />
-
-          {/* Loading State */}
-          {loading && <Loading message="Creating account..." />}
         </View>
       </ScrollView>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  scrollContent: {
+    flexGrow: 1,
+  },
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingVertical: theme.spacing['3xl'],
+    minHeight: '100%',
+  },
+  formContainer: {
+    gap: theme.spacing.lg,
+  },
+  inputGroup: {
+    gap: theme.spacing.xs,
+  },
+  label: {
+    ...theme.typography.body,
+    color: theme.colors.text.secondary,
+    fontWeight: '500',
+  },
+  registerButton: {
+    width: '100%',
+  },
+});

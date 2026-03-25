@@ -1,14 +1,17 @@
-import React from "react";
-import { View, TextInput, Text, TouchableOpacity } from "react-native";
+import React, { useState } from "react";
+import { View, TextInput, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Eye, EyeOff, LucideIcon } from "lucide-react-native";
+import { theme, commonStyles } from "@/shared/styles";
 
 interface InputProps {
   placeholder: string;
   value: string;
   onChangeText: (text: string) => void;
-  type?: "text" | "email" | "password";
   error?: string;
+  secureTextEntry?: boolean;
   icon?: LucideIcon;
+  keyboardType?: "default" | "email-address" | "numeric" | "phone-pad";
+  autoCapitalize?: "none" | "sentences" | "words" | "characters";
   className?: string;
 }
 
@@ -16,61 +19,95 @@ export function Input({
   placeholder,
   value,
   onChangeText,
-  type = "text",
   error,
+  secureTextEntry,
   icon: IconComponent,
-  className = "",
+  keyboardType = "default",
+  autoCapitalize = "none",
 }: InputProps) {
-  const [showPassword, setShowPassword] = React.useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <View className={`mb-4 ${className}`}>
-      <View
-        className={`
-          flex-row items-center rounded-xl h-12 px-4 border
-          ${error
-            ? "bg-red-900/20 border-red-500/50"
-            : "bg-gray-800/50 border-gray-600/50"
-          }
-        `}
-      >
+    <View style={styles.container}>
+      <View style={[
+        styles.inputWrapper,
+        error ? styles.inputError : styles.inputDefault
+      ]}>
         {IconComponent && (
-          <View className="mr-3">
+          <View style={styles.iconContainer}>
             <IconComponent
               size={20}
-              color={error ? "#EF4444" : "#9CA3AF"}
+              color={error ? theme.colors.dangerText : theme.colors.text.secondary}
             />
           </View>
         )}
 
         <TextInput
-          className="flex-1 text-base text-white"
+          style={styles.input}
           placeholder={placeholder}
-          placeholderTextColor="#6B7280"
+          placeholderTextColor={theme.colors.text.tertiary}
           value={value}
           onChangeText={onChangeText}
-          secureTextEntry={type === "password" && !showPassword}
-          autoCapitalize={type === "email" ? "none" : "sentences"}
-          keyboardType={type === "email" ? "email-address" : "default"}
+          secureTextEntry={secureTextEntry && !showPassword}
+          keyboardType={keyboardType}
+          autoCapitalize={autoCapitalize}
         />
 
-        {type === "password" && (
+        {secureTextEntry && (
           <TouchableOpacity
             onPress={() => setShowPassword(!showPassword)}
-            className="ml-3"
+            style={styles.eyeIcon}
           >
             {showPassword ? (
-              <EyeOff size={20} color="#6B7280" />
+              <EyeOff size={20} color={theme.colors.text.secondary} />
             ) : (
-              <Eye size={20} color="#6B7280" />
+              <Eye size={20} color={theme.colors.text.secondary} />
             )}
           </TouchableOpacity>
         )}
       </View>
 
       {error && (
-        <Text className="text-red-400 text-sm mt-1">{error}</Text>
+        <Text style={styles.errorText}>{error}</Text>
       )}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    marginBottom: theme.spacing.lg,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: theme.borderRadius.md,
+    height: theme.sizes.input,
+    paddingHorizontal: theme.spacing.lg,
+    borderWidth: 1,
+  },
+  inputDefault: {
+    backgroundColor: theme.colors.glassDefault,
+    borderColor: theme.colors.border.default,
+  },
+  inputError: {
+    backgroundColor: theme.colors.dangerDim,
+    borderColor: theme.colors.dangerBorder,
+  },
+  iconContainer: {
+    marginRight: theme.spacing.md,
+  },
+  input: {
+    flex: 1,
+    ...theme.typography.body,
+    color: theme.colors.text.primary,
+  },
+  eyeIcon: {
+    marginLeft: theme.spacing.md,
+  },
+  errorText: {
+    ...theme.typography.small,
+    color: theme.colors.dangerText,
+    marginTop: theme.spacing.xs,
+  },
+});

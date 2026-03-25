@@ -1,7 +1,8 @@
 import React from "react";
-import { View, Text } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { Shield, Globe, User } from "lucide-react-native";
+import { theme, commonStyles } from "@/shared/styles";
 
 interface AuthHeaderProps {
   title: string;
@@ -11,29 +12,49 @@ interface AuthHeaderProps {
 
 export function AuthHeader({ title, subtitle, icon = "shield" }: AuthHeaderProps) {
   const getIcon = () => {
+    const iconColor = theme.colors.infoText;
+    const iconSize = 48;
+    
     switch (icon) {
-      case "shield":
-        return <Shield size={48} color="#60A5FA" strokeWidth={2} />;
       case "globe":
-        return <Globe size={48} color="#60A5FA" strokeWidth={2} />;
+        return <Globe size={iconSize} color={iconColor} strokeWidth={2} />;
       case "user":
-        return <User size={48} color="#60A5FA" strokeWidth={2} />;
+        return <User size={iconSize} color={iconColor} strokeWidth={2} />;
       default:
-        return <Shield size={48} color="#60A5FA" strokeWidth={2} />;
+        return <Shield size={iconSize} color={iconColor} strokeWidth={2} />;
     }
   };
 
   return (
-    <Animated.View entering={FadeInDown.duration(500)} className="mb-section-gap">
-      <View className="glass-card-strong mb-lg p-card-padding rounded-xl items-center">
+    <Animated.View entering={FadeInDown.duration(500)} style={styles.container}>
+      <View style={[commonStyles.glassCardStrong, styles.iconContainer]}>
         {getIcon()}
       </View>
-      <Text className="text-display text-text-primary text-center mb-2">
+      <Text style={[commonStyles.textDisplay, styles.title]}>
         {title}
       </Text>
-      <Text className="text-body-secondary text-center">
+      <Text style={[commonStyles.textBodySecondary, styles.subtitle]}>
         {subtitle}
       </Text>
     </Animated.View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    marginBottom: theme.spacing.sectionGap,
+  },
+  iconContainer: {
+    marginBottom: theme.spacing.lg,
+    padding: theme.spacing.cardPadding,
+    borderRadius: theme.borderRadius.xl,
+    alignItems: 'center',
+  },
+  title: {
+    textAlign: 'center',
+    marginBottom: theme.spacing.sm,
+  },
+  subtitle: {
+    textAlign: 'center',
+  },
+});

@@ -115,6 +115,12 @@ export const googleLogin = async (req, res) => {
 // @route   PUT /api/auth/onboarding
 export const completeOnboarding = async (req, res) => {
   try {
+    console.log('📝 Onboarding request:', {
+      userId: req.user?._id,
+      body: req.body,
+      hasUser: !!req.user,
+    });
+
     const { language } = req.body;
     const user = await User.findById(req.user._id);
 
@@ -122,6 +128,8 @@ export const completeOnboarding = async (req, res) => {
       user.language = language || 'en';
       user.hasOnboarded = true;
       const updatedUser = await user.save();
+
+      console.log('✅ Onboarding completed for:', updatedUser.email);
 
       res.json({
         success: true,
@@ -132,9 +140,11 @@ export const completeOnboarding = async (req, res) => {
         token: generateToken(updatedUser._id),
       });
     } else {
+      console.log('❌ User not found:', req.user._id);
       res.status(404).json({ success: false, message: 'User not found' });
     }
   } catch (error) {
+    console.error('❌ Onboarding error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };

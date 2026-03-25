@@ -1,11 +1,23 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { commonStyles, theme } from '@/shared/styles';
 
 export default function ScannerScreen() {
     return (
-        <View className="flex-1 bg-background justify-center items-center">
-            <Text className="text-lg font-semibold text-text">Scanner</Text>
-            <Text className="text-sm text-textSecondary mt-2">Scanner functionality coming soon...</Text>
+        <View style={commonStyles.screenCentered}>
+            <Text style={[commonStyles.textH2, styles.title]}>Scanner</Text>
+            <Text style={[commonStyles.textBodySecondary, styles.subtitle]}>
+                Scanner functionality coming soon...
+            </Text>
         </View>
     );
 }
+
+const styles = StyleSheet.create({
+    title: {
+        marginBottom: theme.spacing.sm,
+    },
+    subtitle: {
+        textAlign: 'center',
+    },
+});

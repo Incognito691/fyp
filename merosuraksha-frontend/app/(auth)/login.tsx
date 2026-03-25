@@ -1,5 +1,5 @@
 import React from "react";
-import { View, ScrollView, TouchableOpacity, ActivityIndicator, Text } from "react-native";
+import { View, ScrollView, TouchableOpacity, ActivityIndicator, Text, StyleSheet } from "react-native";
 import { router } from "expo-router";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,12 +16,14 @@ import {
   loginSchema,
   type LoginInput,
 } from "../../features/auth/utils/validation";
+import { theme, commonStyles, buttonStyles } from "@/shared/styles";
 
 export default function LoginScreen() {
   const { login, user, googleLogin } = useAuth();
   const [loading, setLoading] = React.useState(false);
   const [googleLoading, setGoogleLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const isSubmitting = React.useRef(false);
 
   const {
     control,
@@ -35,7 +37,6 @@ export default function LoginScreen() {
     },
   });
 
-  // Redirect if already logged in
   React.useEffect(() => {
     if (user?.hasOnboarded) {
       router.replace("/(main)/home");
@@ -45,15 +46,35 @@ export default function LoginScreen() {
   }, [user]);
 
   const onSubmit = async (data: LoginInput) => {
+    // Prevent multiple simultaneous submissions
+    if (isSubmitting.current) {
+      console.log("Already submitting, ignoring duplicate request");
+      return;
+    }
+
+    console.log("Starting login with:", data.email);
+    isSubmitting.current = true;
     setError(null);
     setLoading(true);
 
-    const result = await login(data);
-
-    setLoading(false);
-
-    if (!result.success) {
-      setError(result.message || "Login failed");
+    try {
+      const result = await login(data);
+      console.log("Login result:", result);
+      
+      if (!result.success) {
+        console.log("Login failed:", result.message);
+        setError(result.message || "Login failed");
+        setLoading(false);
+        isSubmitting.current = false;
+      } else {
+        console.log("Login successful, waiting for redirect");
+      }
+      // If success, don't reset - let the redirect happen
+    } catch (err: any) {
+      console.error("Login error:", err);
+      setError(err.message || "An error occurred during login");
+      setLoading(false);
+      isSubmitting.current = false;
     }
   };
 
@@ -62,8 +83,6 @@ export default function LoginScreen() {
     setGoogleLoading(true);
 
     try {
-      // TODO: Implement Google Sign-In
-      // For now, show a message
       setError("Google Sign-In coming soon!");
     } catch (error) {
       setError("Google login failed");
@@ -73,56 +92,47 @@ export default function LoginScreen() {
   };
 
   return (
-    <View className="flex-1 bg-gray-900">
+    <View style={commonStyles.screen}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        className="flex-1"
-        contentContainerStyle={{ flexGrow: 1 }}
+        contentContainerStyle={styles.scrollContent}
       >
-        <View className="flex-1 justify-center px-6 py-8 min-h-screen">
-          {/* Header */}
+        <View style={styles.container}>
           <AuthHeader
             title="Welcome Back"
             subtitle="Protect yourself from scams and threats"
             icon="shield"
           />
 
-          {/* Error Alert */}
           {error && (
-            <Animated.View
-              entering={FadeInUp.duration(300)}
-            >
+            <Animated.View entering={FadeInUp.duration(300)}>
               <Alert message={error} type="error" />
             </Animated.View>
           )}
 
-          {/* Login Form */}
           <Animated.View
             entering={FadeInUp.duration(500).delay(100)}
-            className="gap-4"
+            style={styles.formContainer}
           >
-            {/* Google Login Button */}
             <GoogleAuthButton
               onPress={handleGoogleLogin}
               loading={googleLoading}
               text="Sign in with Google"
             />
 
-            {/* Divider */}
             <FormDivider />
 
-            {/* Email Input */}
             <Controller
               control={control}
               name="email"
               render={({ field: { onChange, value } }) => (
-                <View className="gap-1">
-                  <Text className="text-gray-300 text-sm font-medium">Email Address</Text>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Email Address</Text>
                   <Input
                     placeholder="Enter your email"
                     value={value}
                     onChangeText={onChange}
-                    type="email"
+                    keyboardType="email-address"
                     error={errors.email?.message}
                     icon={Mail}
                   />
@@ -130,18 +140,17 @@ export default function LoginScreen() {
               )}
             />
 
-            {/* Password Input */}
             <Controller
               control={control}
               name="password"
               render={({ field: { onChange, value } }) => (
-                <View className="gap-1">
-                  <Text className="text-gray-300 text-sm font-medium">Password</Text>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Password</Text>
                   <Input
                     placeholder="Enter your password"
                     value={value}
                     onChangeText={onChange}
-                    type="password"
+                    secureTextEntry
                     error={errors.password?.message}
                     icon={Lock}
                   />
@@ -149,31 +158,52 @@ export default function LoginScreen() {
               )}
             />
 
-            {/* Login Button */}
             <TouchableOpacity
-              className="bg-blue-500 h-12 rounded-xl px-6 flex-row items-center justify-center"
+              style={[buttonStyles.btnPrimary, styles.signInButton]}
               onPress={handleSubmit(onSubmit)}
               disabled={loading}
             >
               {loading ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
-                <Text className="text-white font-semibold text-base">Sign In</Text>
+                <Text style={buttonStyles.btnPrimaryText}>Sign In</Text>
               )}
             </TouchableOpacity>
           </Animated.View>
 
-          {/* Footer */}
           <AuthFooter
             question="Don't have an account?"
             linkText="Create Account"
             linkRoute="/(auth)/register"
           />
-
-          {/* Loading State */}
-          {loading && <Loading message="Signing in..." />}
         </View>
       </ScrollView>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  scrollContent: {
+    flexGrow: 1,
+  },
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingVertical: theme.spacing['3xl'],
+    minHeight: '100%',
+  },
+  formContainer: {
+    gap: theme.spacing.lg,
+  },
+  inputGroup: {
+    gap: theme.spacing.xs,
+  },
+  label: {
+    ...theme.typography.body,
+    color: theme.colors.text.secondary,
+    fontWeight: '500',
+  },
+  signInButton: {
+    width: '100%',
+  },
+});

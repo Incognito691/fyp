@@ -1,54 +1,68 @@
 import React from "react";
-import { TouchableOpacity, Text, ActivityIndicator } from "react-native";
+import { TouchableOpacity, Text, ActivityIndicator, StyleSheet } from "react-native";
 import Animated, { ZoomIn } from "react-native-reanimated";
+import { buttonStyles, theme } from "@/shared/styles";
 
 interface ButtonProps {
-  title: string;
+  text: string;
   onPress: () => void;
-  variant?: "primary" | "outline";
-  size?: "md" | "lg";
-  loading?: boolean;
-  disabled?: boolean;
+  variant?: "primary" | "secondary" | "ghost";
+  isLoading?: boolean;
+  isDisabled?: boolean;
   className?: string;
 }
 
 export function Button({
-  title,
+  text,
   onPress,
   variant = "primary",
-  size = "md",
-  loading = false,
-  disabled = false,
-  className = "",
+  isLoading = false,
+  isDisabled = false,
 }: ButtonProps) {
-  const isDisabled = disabled || loading;
+  const getButtonStyle = () => {
+    switch (variant) {
+      case "secondary":
+        return buttonStyles.btnSecondary;
+      case "ghost":
+        return buttonStyles.btnGhost;
+      default:
+        return buttonStyles.btnPrimary;
+    }
+  };
+
+  const getTextStyle = () => {
+    switch (variant) {
+      case "secondary":
+        return buttonStyles.btnSecondaryText;
+      case "ghost":
+        return buttonStyles.btnGhostText;
+      default:
+        return buttonStyles.btnPrimaryText;
+    }
+  };
 
   return (
-    <Animated.View entering={ZoomIn.duration(200)} className={className}>
+    <Animated.View entering={ZoomIn.duration(200)}>
       <TouchableOpacity
         onPress={onPress}
-        disabled={isDisabled}
-        className={`
-          ${variant === "primary"
-            ? "bg-blue-500 border-blue-500"
-            : "bg-gray-800/50 border-gray-600/50"
-          }
-          ${size === "lg" ? "h-14" : "h-12"}
-          rounded-xl px-6 flex-row items-center justify-center border
-          ${isDisabled ? "opacity-50" : ""}
-        `}
+        disabled={isDisabled || isLoading}
+        style={[
+          getButtonStyle(),
+          (isDisabled || isLoading) && styles.disabled
+        ]}
       >
-        {loading ? (
+        {isLoading ? (
           <ActivityIndicator size="small" color="#FFFFFF" />
         ) : (
-          <Text className={`
-            font-semibold text-base
-            ${variant === "primary" ? "text-white" : "text-white"}
-          `}>
-            {title}
-          </Text>
+          <Text style={getTextStyle()}>{text}</Text>
         )}
       </TouchableOpacity>
     </Animated.View>
   );
 }
+
+const styles = StyleSheet.create({
+  disabled: {
+    opacity: 0.5,
+  },
+});
