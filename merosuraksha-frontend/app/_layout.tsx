@@ -9,6 +9,7 @@ export default function RootLayout() {
         {/* Explicitly tell Expo Router about your top-level structure */}
         <Stack.Screen name="index" />
         <Stack.Screen name="permissions" />
+        <Stack.Screen name="sms-permission" />
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(main)" />
       </Stack>
