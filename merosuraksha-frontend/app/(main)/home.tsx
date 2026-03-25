@@ -1,11 +1,13 @@
 import React from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
+import { useRouter } from "expo-router";
 import { Button } from "../../shared/components";
 import { useAuth } from "../../features/auth/hooks/use-auth";
 import { theme, commonStyles } from "@/shared/styles";
 
 export default function HomeScreen() {
   const { user, logout } = useAuth();
+  const router = useRouter();
 
   return (
     <ScrollView
@@ -20,7 +22,13 @@ export default function HomeScreen() {
           You're now protected with MeroSuraksha
         </Text>
 
-        <Button text="Logout" onPress={logout} variant="secondary" />
+        <View style={styles.buttonContainer}>
+          <Button 
+            text="Verify Phone Number" 
+            onPress={() => router.push("/(main)/verify")} 
+          />
+          <Button text="Logout" onPress={logout} variant="secondary" />
+        </View>
       </View>
     </ScrollView>
   );
@@ -42,5 +50,9 @@ const styles = StyleSheet.create({
   subtitle: {
     textAlign: 'center',
     marginBottom: theme.spacing['3xl'],
+  },
+  buttonContainer: {
+    width: '100%',
+    gap: theme.spacing.md,
   },
 });
