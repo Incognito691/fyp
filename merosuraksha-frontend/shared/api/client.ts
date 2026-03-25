@@ -3,13 +3,10 @@ import { Platform } from "react-native";
 import { storage } from "@/shared/utils/storage";
 
 // 🔗 API Base URL - Automatically configured based on platform
-// - Web: Uses localhost (your local backend)
-// - Native: Uses ngrok URL (accessible from anywhere)
+// - For development: Uses ngrok URL (accessible from anywhere)
+// - You can override with environment variable
 const getApiBaseUrl = () => {
-  if (Platform.OS === 'web') {
-    return 'http://localhost:5001/api';
-  }
-  // For native (iOS/Android), use ngrok URL from environment
+  // Always use ngrok URL from environment (works for both web and native)
   return process.env.EXPO_PUBLIC_API_BASE_URL || 'https://turdine-malisa-aulic.ngrok-free.dev/api';
 };
 
