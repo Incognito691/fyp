@@ -49,7 +49,8 @@ export default function PermissionsScreen() {
     }
 
     setPermissionStatus('granted');
-    setTimeout(() => router.replace('/(auth)/login'), 1000);
+    // After device permissions, go to SMS permission screen
+    setTimeout(() => router.replace('/sms-permission'), 1000);
   };
 
   const requestPermissions = async () => {
@@ -77,7 +78,8 @@ export default function PermissionsScreen() {
     }
 
     setPermissionStatus('granted');
-    setTimeout(() => router.replace('/(auth)/login'), 1000);
+    // After all device permissions granted, proceed to SMS permission
+    setTimeout(() => router.replace('/sms-permission'), 1000);
   };
 
   const showDeniedAlert = (permission: string) => {
