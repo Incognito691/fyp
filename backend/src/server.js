@@ -9,6 +9,7 @@ import morgan from "morgan";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import verificationRoutes from "./routes/verificationRoutes.js";
+import reportRoutes from "./routes/reportRoutes.js";
 
 // Load environment variables from .env file
 dotenv.config();
@@ -43,6 +44,7 @@ app.use(morgan("dev"));
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/verify", verificationRoutes);
+app.use("/api/reports", reportRoutes);
 
 // Health check endpoint
 app.get("/", (req, res) => {
