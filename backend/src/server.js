@@ -8,6 +8,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
+import verificationRoutes from "./routes/verificationRoutes.js";
 
 // Load environment variables from .env file
 dotenv.config();
@@ -41,6 +42,7 @@ app.use(morgan("dev"));
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/verify", verificationRoutes);
 
 // Health check endpoint
 app.get("/", (req, res) => {
