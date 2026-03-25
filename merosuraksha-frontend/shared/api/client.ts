@@ -1,20 +1,21 @@
 import axios from "axios";
-import * as SecureStore from "expo-secure-store";
+import { Platform } from "react-native";
+import { storage } from "@/shared/utils/storage";
 
-// 🔗 API Base URL - Choose based on your testing method:
-// -------------------------------------------------------
-// ✅ Physical Device (Expo Go app) - YOUR IP:
-const API_BASE_URL = "http://192.168.1.107:5000/api";
+// 🔗 API Base URL - Automatically configured based on platform
+// - Web: Uses localhost (your local backend)
+// - Native: Uses ngrok URL (accessible from anywhere)
+const getApiBaseUrl = () => {
+  if (Platform.OS === 'web') {
+    return 'http://localhost:5001/api';
+  }
+  // For native (iOS/Android), use ngrok URL from environment
+  return process.env.EXPO_PUBLIC_API_BASE_URL || 'https://turdine-malisa-aulic.ngrok-free.dev/api';
+};
 
-// 📱 Android Emulator (AVD):
-// const API_BASE_URL = "http://10.0.2.2:5000/api";
+const API_BASE_URL = getApiBaseUrl();
 
-// 🍎 iOS Simulator:
-// const API_BASE_URL = "http://localhost:5000/api";
-
-// 🌐 Web Browser:
-// const API_BASE_URL = "http://localhost:5000/api";
-// -------------------------------------------------------
+console.log('🔗 API Base URL:', API_BASE_URL);
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -25,7 +26,7 @@ const api = axios.create({
 // Add token to every request automatically
 api.interceptors.request.use(async (config) => {
   try {
-    const token = await SecureStore.getItemAsync("token");
+    const token = await storage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -39,12 +40,25 @@ api.interceptors.request.use(async (config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Uncomment for debugging:
-    // console.error("❌ API Error:", {
-    //   url: error.config?.url,
-    //   status: error.response?.status,
-    //   message: error.response?.data?.message,
-    // });
+    // More detailed error logging
+    if (error.code === 'ECONNABORTED') {
+      console.error("❌ Request timeout - backend may be down or unreachable");
+    } else if (error.code === 'ERR_NETWORK') {
+      console.error("❌ Network error - cannot reach backend at:", API_BASE_URL);
+    } else if (!error.response) {
+      console.error("❌ No response from server - backend may be down");
+    }
+    
+    console.error("❌ API Error:", {
+      url: error.config?.url,
+      baseURL: error.config?.baseURL,
+      method: error.config?.method,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      message: error.response?.data?.message,
+      data: error.response?.data,
+      code: error.code,
+    });
     
     return Promise.reject(error);
   }

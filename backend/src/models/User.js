@@ -46,11 +46,10 @@ const userSchema = mongoose.Schema(
 );
 
 // Middleware: Encrypt password before saving
-userSchema.pre("save", async function (next) {
+userSchema.pre("save", async function () {
   // If password is not modified OR if it doesn't exist (Google User), skip
   if (!this.isModified("password") || !this.password) {
-    next();
-    return; // Important: Stop execution here
+    return;
   }
 
   const salt = await bcrypt.genSalt(10);

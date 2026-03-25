@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import * as SecureStore from 'expo-secure-store';
+import { storage } from '@/shared/utils/storage';
 import { authApi } from '../api/auth-api';
 import type { User, LoginInput, RegisterInput, OnboardingInput } from '../types/auth.types';
 
@@ -24,8 +24,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const loadAuth = async () => {
       try {
         const [token, userData] = await Promise.all([
-          SecureStore.getItemAsync('token'),
-          SecureStore.getItemAsync('user'),
+          storage.getItem('token'),
+          storage.getItem('user'),
         ]);
         if (token && userData) {
           setUser(JSON.parse(userData));
@@ -52,8 +52,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           hasOnboarded: response.hasOnboarded ?? false,
           token: response.token,
         };
-        await SecureStore.setItemAsync('token', response.token);
-        await SecureStore.setItemAsync('user', JSON.stringify(user));
+        await storage.setItem('token', response.token);
+        await storage.setItem('user', JSON.stringify(user));
         setUser(user);
         return { success: true };
       }
@@ -76,8 +76,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           hasOnboarded: response.hasOnboarded ?? false,
           token: response.token,
         };
-        await SecureStore.setItemAsync('token', response.token);
-        await SecureStore.setItemAsync('user', JSON.stringify(user));
+        await storage.setItem('token', response.token);
+        await storage.setItem('user', JSON.stringify(user));
         setUser(user);
         return { success: true };
       }
@@ -92,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await authApi.completeOnboarding(data);
       if (response.success && user) {
         const updated: User = { ...user, language: data.language, hasOnboarded: true };
-        await SecureStore.setItemAsync('user', JSON.stringify(updated));
+        await storage.setItem('user', JSON.stringify(updated));
         setUser(updated);
         return { success: true };
       }
@@ -116,8 +116,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           avatar: response.avatar,
           token: response.token,
         };
-        await SecureStore.setItemAsync('token', response.token);
-        await SecureStore.setItemAsync('user', JSON.stringify(user));
+        await storage.setItem('token', response.token);
+        await storage.setItem('user', JSON.stringify(user));
         setUser(user);
         return { success: true };
       }
@@ -128,8 +128,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    await SecureStore.deleteItemAsync('token');
-    await SecureStore.deleteItemAsync('user');
+    await storage.deleteItem('token');
+    await storage.deleteItem('user');
     setUser(null);
   };
 

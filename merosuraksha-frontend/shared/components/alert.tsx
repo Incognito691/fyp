@@ -1,33 +1,31 @@
 import React from "react";
-import { View, Text } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { AlertCircle, CheckCircle } from "lucide-react-native";
+import { theme, commonStyles } from "@/shared/styles";
 
 interface AlertProps {
+  type: "error" | "success";
   message: string;
-  type?: "error" | "success";
 }
 
-export function Alert({ message, type = "error" }: AlertProps) {
+export function Alert({ type, message }: AlertProps) {
   return (
     <Animated.View entering={FadeInDown.duration(300)}>
-      <View className={`
-        p-4 rounded-lg mb-2 border
-        ${type === "error"
-          ? "bg-red-900/20 border-red-500/30"
-          : "bg-green-900/20 border-green-500/30"
-        }
-      `}>
-        <View className="flex-row items-center gap-3">
+      <View style={[
+        styles.container,
+        type === "error" ? styles.errorContainer : styles.successContainer
+      ]}>
+        <View style={styles.content}>
           {type === "error" ? (
-            <AlertCircle size={20} color="#EF4444" />
+            <AlertCircle size={20} color={theme.colors.danger} />
           ) : (
-            <CheckCircle size={20} color="#10B981" />
+            <CheckCircle size={20} color={theme.colors.safe} />
           )}
-          <Text className={`
-            flex-1 text-base
-            ${type === "error" ? "text-red-400" : "text-green-400"}
-          `}>
+          <Text style={[
+            styles.text,
+            type === "error" ? styles.errorText : styles.successText
+          ]}>
             {message}
           </Text>
         </View>
@@ -35,3 +33,35 @@ export function Alert({ message, type = "error" }: AlertProps) {
     </Animated.View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    padding: theme.spacing.lg,
+    borderRadius: theme.borderRadius.md,
+    marginBottom: theme.spacing.sm,
+    borderWidth: 1,
+  },
+  errorContainer: {
+    backgroundColor: theme.colors.dangerDim,
+    borderColor: theme.colors.dangerBorder,
+  },
+  successContainer: {
+    backgroundColor: theme.colors.safeDim,
+    borderColor: theme.colors.safeBorder,
+  },
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+  },
+  text: {
+    flex: 1,
+    ...theme.typography.body,
+  },
+  errorText: {
+    color: theme.colors.dangerText,
+  },
+  successText: {
+    color: theme.colors.safeText,
+  },
+});

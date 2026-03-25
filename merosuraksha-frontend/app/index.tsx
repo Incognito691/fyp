@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from "react";
-import { View, Text, Image } from "react-native";
+import React, { useEffect } from "react";
+import { View, Text, StyleSheet } from "react-native";
 import { router, useRootNavigationState } from "expo-router";
 import Animated, {
   FadeIn,
@@ -11,6 +11,7 @@ import Animated, {
   withSequence,
 } from "react-native-reanimated";
 import { Shield } from "lucide-react-native";
+import { theme, commonStyles } from "@/shared/styles";
 
 export default function SplashScreen() {
   const rootNavigationState = useRootNavigationState();
@@ -42,61 +43,38 @@ export default function SplashScreen() {
   }));
 
   return (
-    <View className="flex-1 bg-background justify-center items-center px-5">
+    <View style={[commonStyles.screenCentered, { paddingHorizontal: theme.spacing.xl }]}>
 
       {/* Outer pulse ring */}
       <Animated.View
-        style={ringStyle}
-        className="absolute w-48 h-48 rounded-full border 
-          border-info-border"
+        style={[styles.ring, ringStyle]}
       />
 
       {/* Middle pulse ring */}
       <Animated.View
-        style={[ringStyle, { transform: [{ scale: 0.75 }] }]}
-        className="absolute w-48 h-48 rounded-full border 
-          border-info-border"
+        style={[styles.ring, ringStyle, { transform: [{ scale: 0.75 }] }]}
       />
 
       {/* Logo container */}
       <Animated.View
         entering={FadeIn.duration(800)}
-        className="items-center"
+        style={commonStyles.itemsCenter}
       >
 
-        {/* ── LOGO ────────────────────────────────────────
-            When your logo PNG is ready, replace the View
-            + Shield below with just:
-            <Image
-              source={require('../assets/images/icon.png')}
-              className="w-24 h-24"
-              resizeMode="contain"
-            />
-        ────────────────────────────────────────────────── */}
-        <View
-          className="w-24 h-24 rounded-3xl bg-info-dim 
-            border border-info-border items-center 
-            justify-center mb-6"
-        >
-          <Shield size={48} color="#3B82F6" />
+        <View style={styles.logoContainer}>
+          <Shield size={48} color={theme.colors.info} />
         </View>
 
         {/* App Name */}
         <Animated.View entering={FadeInDown.duration(600).delay(400)}>
-          <Text
-            className="text-display text-text-primary 
-              font-bold text-center tracking-tight"
-          >
+          <Text style={[commonStyles.textDisplay, styles.appName]}>
             MeroSuraksha
           </Text>
         </Animated.View>
 
         {/* Tagline */}
         <Animated.View entering={FadeInDown.duration(600).delay(600)}>
-          <Text
-            className="text-body text-text-secondary 
-              text-center mt-2"
-          >
+          <Text style={[commonStyles.textBody, styles.tagline]}>
             Your Digital Security Companion
           </Text>
         </Animated.View>
@@ -104,7 +82,7 @@ export default function SplashScreen() {
         {/* Animated dots loader */}
         <Animated.View
           entering={FadeInDown.duration(600).delay(900)}
-          className="flex-row gap-2 mt-10"
+          style={styles.dotsContainer}
         >
           {[0, 1, 2].map((i) => (
             <AnimatedDot key={i} delay={i * 200} />
@@ -116,9 +94,9 @@ export default function SplashScreen() {
       {/* Bottom tagline */}
       <Animated.View
         entering={FadeInDown.duration(600).delay(1000)}
-        className="absolute bottom-12"
+        style={styles.bottomTagline}
       >
-        <Text className="text-small text-text-tertiary text-center">
+        <Text style={[commonStyles.textSmall, { textAlign: 'center' }]}>
           Protecting Nepal, one scan at a time
         </Text>
       </Animated.View>
@@ -163,8 +141,53 @@ function AnimatedDot({ delay }: { delay: number }) {
 
   return (
     <Animated.View
-      style={dotStyle}
-      className="w-2 h-2 rounded-full bg-info"
+      style={[styles.dot, dotStyle]}
     />
   );
 }
+
+const styles = StyleSheet.create({
+  ring: {
+    position: 'absolute',
+    width: 192,
+    height: 192,
+    borderRadius: 96,
+    borderWidth: 1,
+    borderColor: theme.colors.infoBorder,
+  },
+  logoContainer: {
+    width: 96,
+    height: 96,
+    borderRadius: 24,
+    backgroundColor: theme.colors.infoDim,
+    borderWidth: 1,
+    borderColor: theme.colors.infoBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing['2xl'],
+  },
+  appName: {
+    textAlign: 'center',
+    letterSpacing: -0.56,
+  },
+  tagline: {
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+    marginTop: theme.spacing.sm,
+  },
+  dotsContainer: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+    marginTop: theme.spacing['4xl'],
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: theme.colors.infoText,
+  },
+  bottomTagline: {
+    position: 'absolute',
+    bottom: 48,
+  },
+});

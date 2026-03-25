@@ -21,19 +21,22 @@ const app = express();
 // Middlewares (Modern Stack)
 app.use(express.json());
 
-// ✅ Allow connections from your phone's IP
+// ✅ CORS - Allow all origins for development
 app.use(
   cors({
-    origin: [
-      "http://localhost:5000",
-      "http://192.168.1.107:5000",
-      "exp://192.168.1.107:8081", // Expo Go
-    ],
+    origin: true, // Allow all origins in development
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   }),
 );
 
-app.use(helmet());
+// Configure helmet to allow CORS
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+}));
+
 app.use(morgan("dev"));
 
 // Routes
@@ -58,10 +61,10 @@ app.use((err, req, res, next) => {
 });
 
 // Start the server
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // ✅ Listen on ALL network interfaces (0.0.0.0) so phone can connect
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server is running on port ${PORT}`);
-  console.log(`📱 Accessible at: http://192.168.1.107:${PORT}`);
+  console.log(`📱 Accessible at: http://192.168.1.114:${PORT}`);
 });

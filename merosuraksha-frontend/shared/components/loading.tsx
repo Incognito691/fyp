@@ -1,6 +1,7 @@
 import React from "react";
-import { ActivityIndicator, Text, View } from "react-native";
+import { ActivityIndicator, Text, View, StyleSheet } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
+import { theme, commonStyles } from "@/shared/styles";
 
 interface LoadingProps {
   message?: string;
@@ -9,10 +10,10 @@ interface LoadingProps {
 export function Loading({ message }: LoadingProps) {
   return (
     <Animated.View entering={FadeIn.duration(300)}>
-      <View className="glass-card p-card-padding rounded-lg items-center justify-center">
-        <ActivityIndicator size="small" color="#60A5FA" />
+      <View style={[commonStyles.glassCard, styles.container]}>
+        <ActivityIndicator size="small" color={theme.colors.infoText} />
         {message && (
-          <Text className="text-body text-text-secondary ml-sm mt-sm">
+          <Text style={[commonStyles.textBodySecondary, styles.message]}>
             {message}
           </Text>
         )}
@@ -20,3 +21,14 @@ export function Loading({ message }: LoadingProps) {
     </Animated.View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  message: {
+    marginLeft: theme.spacing.sm,
+    marginTop: theme.spacing.sm,
+  },
+});
